@@ -1,7 +1,7 @@
 # spring-instagram-20th
 CEOS 20th BE study - instagram clone coding
 
-![세오스_인스타그램](https://github.com/user-attachments/assets/3a1d4b94-92f6-4887-abd0-03e60aacded8)
+![세오스_인스타그램](https://github.com/user-attachments/assets/febf859f-3fbd-4009-9248-e408e1f4b0ac)
 
 ## 인스타그램 서비스 소개 
 - 사용자가 글과 사진을 업로드하고, 게시물에 대한 댓글과 대댓글을 작성하거나 좋아요를 표시할 수 있는 SNS 서비스입니다. 그리고 유저 간에 1: 1 메시지 기능을 사용할 수 있습니다. 
