@@ -8,6 +8,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+      dialect: org.hibernate.dialect.MySQLDialect  # MySQL Dialect 추가
     show-sql: true
     properties:
       hibernate:
