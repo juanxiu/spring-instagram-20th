@@ -23,7 +23,7 @@
 <tr>
 <td>
 <div class="infoBox" id="tests">
-<div class="counter">2</div>
+<div class="counter">1</div>
 <p>tests</p>
 </div>
 </td>
@@ -41,7 +41,7 @@
 </td>
 <td>
 <div class="infoBox" id="duration">
-<div class="counter">0.549s</div>
+<div class="counter">0.361s</div>
 <p>duration</p>
 </div>
 </td>
@@ -79,12 +79,7 @@
 </thead>
 <tr>
 <td class="success">save_test()</td>
-<td class="success">0.185s</td>
-<td class="success">passed</td>
-</tr>
-<tr>
-<td class="success">update_test()</td>
-<td class="success">0.364s</td>
+<td class="success">0.361s</td>
 <td class="success">passed</td>
 </tr>
 </table>
@@ -92,8 +87,8 @@
 <div id="tab1" class="tab">
 <h2>Standard output</h2>
 <span class="code">
-<pre>16:08:46.196 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ceos20.instagram.PostRepositoryTest]: PostRepositoryTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-16:08:46.230 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ceos20.instagram.InstagramApplication for test class com.ceos20.instagram.PostRepositoryTest
+<pre>20:20:33.516 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.ceos20.instagram.PostRepositoryTest]: PostRepositoryTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+20:20:33.551 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.ceos20.instagram.InstagramApplication for test class com.ceos20.instagram.PostRepositoryTest
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -104,30 +99,37 @@
 
  :: Spring Boot ::                (v3.3.3)
 
-2024-09-23T16:08:46.364+09:00  INFO 1388 --- [    Test worker] c.ceos20.instagram.PostRepositoryTest    : Starting PostRepositoryTest using Java 17.0.12 with PID 1388 (started by yeonsookim in /Users/yeonsookim/spring-instagram-20th)
-2024-09-23T16:08:46.365+09:00  INFO 1388 --- [    Test worker] c.ceos20.instagram.PostRepositoryTest    : No active profile set, falling back to 1 default profile: &quot;default&quot;
-2024-09-23T16:08:46.558+09:00  INFO 1388 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2024-09-23T16:08:46.574+09:00  INFO 1388 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 12 ms. Found 1 JPA repository interface.
-2024-09-23T16:08:46.709+09:00  INFO 1388 --- [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2024-09-23T16:08:46.729+09:00  INFO 1388 --- [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
-2024-09-23T16:08:46.739+09:00  INFO 1388 --- [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2024-09-23T16:08:46.834+09:00  INFO 1388 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2024-09-23T16:08:46.843+09:00  INFO 1388 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2024-09-23T16:08:46.997+09:00  INFO 1388 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4fc3529
-2024-09-23T16:08:46.998+09:00  INFO 1388 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2024-09-23T16:08:47.323+09:00  INFO 1388 --- [    Test worker] o.h.m.i.EntityInstantiatorPojoStandard   : HHH000182: No default (no-argument) constructor for class: com.ceos20.instagram.Domain.Follow (class must be instantiated by Interceptor)
-2024-09-23T16:08:47.338+09:00  INFO 1388 --- [    Test worker] o.h.m.i.EntityInstantiatorPojoStandard   : HHH000182: No default (no-argument) constructor for class: com.ceos20.instagram.Domain.Likes (class must be instantiated by Interceptor)
-2024-09-23T16:08:47.405+09:00  INFO 1388 --- [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2024-09-23T16:08:47.486+09:00  INFO 1388 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2024-09-23T16:08:47.558+09:00  WARN 1388 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2024-09-23T16:08:47.742+09:00  INFO 1388 --- [    Test worker] c.ceos20.instagram.PostRepositoryTest    : Started PostRepositoryTest in 1.46 seconds (process running for 1.819)
+2024-09-28T20:20:33.681+09:00  INFO 3613 --- [    Test worker] c.ceos20.instagram.PostRepositoryTest    : Starting PostRepositoryTest using Java 17.0.12 with PID 3613 (started by yeonsookim in /Users/yeonsookim/spring-instagram-20th)
+2024-09-28T20:20:33.681+09:00  INFO 3613 --- [    Test worker] c.ceos20.instagram.PostRepositoryTest    : No active profile set, falling back to 1 default profile: &quot;default&quot;
+2024-09-28T20:20:33.879+09:00  INFO 3613 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2024-09-28T20:20:33.895+09:00  INFO 3613 --- [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 13 ms. Found 1 JPA repository interface.
+2024-09-28T20:20:34.034+09:00  INFO 3613 --- [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2024-09-28T20:20:34.051+09:00  INFO 3613 --- [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2024-09-28T20:20:34.061+09:00  INFO 3613 --- [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2024-09-28T20:20:34.159+09:00  INFO 3613 --- [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2024-09-28T20:20:34.167+09:00  INFO 3613 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2024-09-28T20:20:34.276+09:00  INFO 3613 --- [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@ce2eaa7
+2024-09-28T20:20:34.276+09:00  INFO 3613 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2024-09-28T20:20:34.543+09:00  INFO 3613 --- [    Test worker] o.h.m.i.EntityInstantiatorPojoStandard   : HHH000182: No default (no-argument) constructor for class: com.ceos20.instagram.Domain.Follow (class must be instantiated by Interceptor)
+2024-09-28T20:20:34.558+09:00  INFO 3613 --- [    Test worker] o.h.m.i.EntityInstantiatorPojoStandard   : HHH000182: No default (no-argument) constructor for class: com.ceos20.instagram.Domain.Likes (class must be instantiated by Interceptor)
+2024-09-28T20:20:34.625+09:00  INFO 3613 --- [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2024-09-28T20:20:34.704+09:00  INFO 3613 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2024-09-28T20:20:34.773+09:00  WARN 3613 --- [    Test worker] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2024-09-28T20:20:34.946+09:00  INFO 3613 --- [    Test worker] c.ceos20.instagram.PostRepositoryTest    : Started PostRepositoryTest in 1.348 seconds (process running for 1.703)
 Hibernate: 
     insert 
     into
         user
-        (email, password) 
+        (email, password, username) 
     values
-        (?, ?)
+        (?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        user
+        (email, password, username) 
+    values
+        (?, ?, ?)
 Hibernate: 
     insert 
     into
@@ -135,24 +137,6 @@ Hibernate:
         (caption, created_at, image_url, user_id) 
     values
         (?, ?, ?, ?)
-Hibernate: 
-    insert 
-    into
-        post
-        (caption, created_at, image_url, user_id) 
-    values
-        (?, ?, ?, ?)
-Hibernate: 
-    insert 
-    into
-        user
-        (email, password) 
-    values
-        (?, ?)
-Hibernate: 
-    delete p1_0 
-    from
-        post p1_0
 Hibernate: 
     insert 
     into
@@ -180,12 +164,49 @@ Hibernate:
         p1_0.caption,
         p1_0.created_at,
         p1_0.image_url,
-        p1_0.user_id 
+        u1_0.user_id,
+        u1_0.email,
+        u1_0.password,
+        u1_0.username 
     from
-        post p1_0
-2024-09-23T16:08:48.298+09:00  INFO 1388 --- [    Test worker] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
-2024-09-23T16:08:48.299+09:00  INFO 1388 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
-2024-09-23T16:08:48.302+09:00  INFO 1388 --- [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+        post p1_0 
+    join
+        user u1_0 
+            on u1_0.user_id=p1_0.user_id
+Hibernate: 
+    select
+        p1_0.user_id,
+        p1_0.post_id,
+        p1_0.caption,
+        p1_0.created_at,
+        p1_0.image_url 
+    from
+        post p1_0 
+    where
+        p1_0.user_id=?
+Hibernate: 
+    select
+        p1_0.user_id,
+        p1_0.post_id,
+        p1_0.caption,
+        p1_0.created_at,
+        p1_0.image_url 
+    from
+        post p1_0 
+    where
+        p1_0.user_id=?
+post = com.ceos20.instagram.Domain.User@47c019d7
+-&gt;post.getUser().getClass() = class com.ceos20.instagram.Domain.User
+-&gt;post.getUser() = com.ceos20.instagram.Domain.User@47c019d7
+post = com.ceos20.instagram.Domain.User@47c019d7
+-&gt;post.getUser().getClass() = class com.ceos20.instagram.Domain.User
+-&gt;post.getUser() = com.ceos20.instagram.Domain.User@47c019d7
+post = com.ceos20.instagram.Domain.User@16124894
+-&gt;post.getUser().getClass() = class com.ceos20.instagram.Domain.User
+-&gt;post.getUser() = com.ceos20.instagram.Domain.User@16124894
+post = com.ceos20.instagram.Domain.User@16124894
+-&gt;post.getUser().getClass() = class com.ceos20.instagram.Domain.User
+-&gt;post.getUser() = com.ceos20.instagram.Domain.User@16124894
 </pre>
 </span>
 </div>
@@ -197,7 +218,7 @@ Hibernate:
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="http://www.gradle.org">Gradle 8.10.1</a> at 2024. 9. 23. 오후 4:08:48</p>
+<a href="http://www.gradle.org">Gradle 8.10.1</a> at 2024. 9. 28. 오후 8:20:35</p>
 </div>
 </div>
 </body>
