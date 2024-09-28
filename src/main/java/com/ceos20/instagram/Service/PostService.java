@@ -10,18 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
-
-/*
-1. 게시물 작성 서비스.
-2. 게시물 조회 서비스.
-3. 게시물 수정 서비스
-4. 게시물 삭제 서비스.
-5. 피드 조회 서비스.
-6. 게시물 좋아요 서비스.
-7. 게시물 댓글 서비스.
- */
 
 @Service
 @RequiredArgsConstructor
@@ -66,7 +57,7 @@ public class PostService {
         Post findPost = postRepository.findPostById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시물이 존재하지 않습니다. ID: " + postId));
 
-        postRepository.delete(findPost); // 엔티티를 직접 삭제
+        postRepository.delete(findPost);
     }
 
 }
