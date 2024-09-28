@@ -6,11 +6,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import com.ceos20.instagram.Domain.User;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +30,6 @@ public class PostRepository {
     List<Post> findAll();
 
      */
-
 
     // Lazy Loading을 사용할 때는 해당 메소드가 실행되는 동안 Hibernate의 세션이 열려 있어야 하므로.
     @Transactional
