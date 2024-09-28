@@ -8,12 +8,9 @@ package com.ceos20.instagram.Domain;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import lombok.Builder;
-import lombok.Generated;
 import lombok.Getter;
 
 @Entity
@@ -21,7 +18,7 @@ import lombok.Getter;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "member_id")
     private Long id;
 
     private String username;

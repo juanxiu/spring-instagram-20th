@@ -8,11 +8,15 @@ package com.ceos20.instagram.Domain;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import lombok.Builder;
 import lombok.Generated;
 import lombok.Getter;
+import org.apache.catalina.User;
+import org.hibernate.metamodel.mapping.MappingModelExpressible;
 
 @Entity
 @Table(name = "post")
@@ -33,6 +37,14 @@ public class Post {
     @JoinColumn(name = "user_id") // DB 의 FK명
     private User user;
 
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
+    private List<Likes> likes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
+    @OrderBy("id asc") // 댓글 정렬
+    private List<Comment> comments;
+
+
     public Post(){
 
     }
@@ -44,12 +56,16 @@ public class Post {
         this.caption = caption;
         this.imageUrl = imageUrl;
         this.createdAt = createdAt;
-        this.user = user;
+        this.user= user;
     }
 
     public void changeContent(String caption, String imageUrl) {
         this.caption = caption;
         this.imageUrl=imageUrl;
+    }
+
+    public int getLikesCount() {
+        return likes.size();
     }
 
 }
