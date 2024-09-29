@@ -19,21 +19,23 @@ public class CommentService {
     private CommentRepository commentRepository;
 
     // 댓글 추가.
-    public Comment save(Long postId, CommentRequest request, String userName) {
-        User user = userRepository.findByEmail(userName)
+    public Comment save(Long postId, CommentRequest request, String userName, Long commentid) {
+        User user = userRepository.findByuserName(userName)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 존재하지 않습니다. userName=" + userName));
 
         Post post = postRepository.findPostById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다. postId=" + postId));
 
-        // CommentRequest에 유저와 포스트를 새로 설정해서 넘김
-        CommentRequest updatedRequest = new CommentRequest(
-                request.getComment(), //댓글 가져오기
-                new Date(),
-                user,
-                post
-        );
-        return commentRepository.save(updatedRequest.toEntity()); // 댓글 저장
+        // 부모 댓글이 있을 경우 찾기 - 대댓글 달기.
+        Comment parentComment = null;
+        if (commentid != null) {
+            parentComment = commentRepository.findById(commentid)
+                    .orElseThrow(() -> new IllegalArgumentException("대댓글을 달 수 없습니다."));
+        }
+
+        Comment comment = request.toEntity(user, post, parentComment); // // parentComment는 null일 수도 있고, 특정 Comment일 수도 있음
+        commentRepository.save(comment);
+        return comment;
     }
 
     //댓글 읽어오기

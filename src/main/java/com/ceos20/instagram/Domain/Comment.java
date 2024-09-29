@@ -13,7 +13,7 @@ import java.util.Date;
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long commentid;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
@@ -28,10 +28,15 @@ public class Comment {
     @JoinColumn(name = "post_id")
     private Post post;
 
+    @JoinColumn(name = "post_id")
+    private Comment parentComment; // 자기참조
+
+
     //댓글 수정
     public void update(String comment) {
         this.comment = comment;
     }
+    // 대댓글 처리 필요 ....
 
 
 }
