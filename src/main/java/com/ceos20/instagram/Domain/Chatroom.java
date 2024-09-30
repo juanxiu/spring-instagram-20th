@@ -14,7 +14,7 @@ public class Chatroom {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long roomid;
+    private Long roomId;
 
     private String roomName;
     @Temporal(TemporalType.TIMESTAMP)
