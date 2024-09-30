@@ -1,18 +1,8 @@
 package com.ceos20.instagram.Domain;
 
 import jakarta.persistence.*;
-/*
-fromUser: 팔로우 관계를 요청하는 사용자
-toUser: 다른 사용자에 의해 팔로우 관계가 생성되는 사용자
-```
-private List<Long> followerList;
-    private List<Long> followingList;
-    ```
-    위와 같이 "유저 엔티티 안에서 리스트로 "구현하지 않은 이유는?
-    만약
+import lombok.Builder;
 
-
- */
 @Entity
 public class Follow {
     @Id
@@ -28,7 +18,7 @@ public class Follow {
     private User toUser;
 
 
-
+    @Builder
     public Follow(User toUser, User fromUser){
         this.toUser = toUser;
         this.fromUser = fromUser;
