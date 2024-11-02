@@ -14,6 +14,7 @@ public class UserDto {
 
     /*
     유효성 검사 어노테이션
+    @Email - 가능?
     @NotBlank
     @Size(min = 8, message = "비밀번호는 최소 8자 이상이어야 합니다.")
      */

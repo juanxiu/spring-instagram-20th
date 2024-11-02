@@ -1,12 +1,12 @@
 package com.ceos20.instagram.Dto;
 
 import com.ceos20.instagram.Domain.Comment;
-import com.ceos20.instagram.Domain.Post;
+import com.ceos20.instagram.post.domain.Post;
 import com.ceos20.instagram.Domain.User;
 import lombok.Builder;
 import lombok.Data;
-import java.util.Date;
 
+// class 가 아니라 record 로.
 @Data
 public class CommentRequest {
     private final String comment;

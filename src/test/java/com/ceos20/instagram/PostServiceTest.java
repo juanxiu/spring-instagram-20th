@@ -1,10 +1,10 @@
 package com.ceos20.instagram;
 
-import com.ceos20.instagram.Domain.Post;
+import com.ceos20.instagram.post.domain.Post;
 import com.ceos20.instagram.Domain.User;
 import com.ceos20.instagram.Dto.PostDto;
 import com.ceos20.instagram.Repository.PostRepository;
-import com.ceos20.instagram.Service.PostService;
+import com.ceos20.instagram.post.service.PostService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -35,12 +35,11 @@ class PostServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        User user = new User(); // User 객체를 생성해야 할 수 있습니다.
+        User user = new User();
         post = Post.builder()
                 .caption("Original Caption")
                 .imageUrl("http://example.com/image.jpg")
                 .createdAt(LocalDateTime.now())
-                .user(user)
                 .build();
         postDto = PostDto.builder()
                 .caption("Updated Caption")

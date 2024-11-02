@@ -1,7 +1,7 @@
 package com.ceos20.instagram.Service;
 
 import com.ceos20.instagram.Domain.Comment;
-import com.ceos20.instagram.Domain.Post;
+import com.ceos20.instagram.post.domain.Post;
 import com.ceos20.instagram.Domain.User;
 import com.ceos20.instagram.Dto.CommentRequest;
 import com.ceos20.instagram.Repository.CommentRepository;
@@ -9,14 +9,20 @@ import com.ceos20.instagram.Repository.PostRepository;
 import com.ceos20.instagram.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import java.util.Date;
+import org.springframework.stereotype.Service;
 import java.util.List;
 
+@Service
 public class CommentService {
     @Autowired
     private UserRepository userRepository;
     private PostRepository postRepository;
     private CommentRepository commentRepository;
+
+    /*
+    1. mapper 사용해서 dto <-> entity 해보 것.
+    2. 유효성 검사를 어떻게 할 건지. globalexceptionhandler?
+     */
 
     // 댓글 추가.
     public Comment save(Long postId, CommentRequest request, String userName, Long commentid) {
@@ -33,12 +39,12 @@ public class CommentService {
                     .orElseThrow(() -> new IllegalArgumentException("대댓글을 달 수 없습니다."));
         }
 
-        Comment comment = request.toEntity(user, post, parentComment); // // parentComment는 null일 수도 있고, 특정 Comment일 수도 있음
+        Comment comment = request.toEntity(user, post, parentComment); // parentComment는 null일 수도 있고, 특정 Comment일 수도 있음
         commentRepository.save(comment);
         return comment;
     }
 
-    //댓글 읽어오기
+    //댓글 조회
     @Transactional
     public List<Comment> findAll(Long postId) {
         Post post = postRepository.findPostById(postId)

@@ -59,6 +59,8 @@ class ChatServiceTest {
         // then
         assertNotNull(createdChatroom);
         assertEquals("Test Room", createdChatroom.getRoomName());
+        //굳이 verify? assert로 다 해결
+        //slf4f - log 찍을 수 있음. warn 검색해서 에러터진 부분만 볼 수 있음.
         verify(chatRoomRepository).findByUserIds(sender.getUserId(), receiver.getUserId());
         verify(chatRoomRepository).save(any(Chatroom.class));
     }

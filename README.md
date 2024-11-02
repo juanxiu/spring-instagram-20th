@@ -106,7 +106,7 @@ Hibernate:
         p1_0.user_id 
     from
         post p1_0
-post = com.ceos20.instagram.Domain.Post@6da53709
+post = com.ceos20.instagram.post.domain.Post@6da53709
 ->post.getUser().getClass() = class com.ceos20.instagram.Domain.User$HibernateProxy$SWmpqPqD
 Hibernate: 
     select
@@ -126,7 +126,7 @@ Hibernate:
     where
         u1_0.user_id=?
 ->post.getUser() = com.ceos20.instagram.Domain.User@3f1eb1bc
-post = com.ceos20.instagram.Domain.Post@2b55ac77
+post = com.ceos20.instagram.post.domain.Post@2b55ac77
 ->post.getUser().getClass() = class com.ceos20.instagram.Domain.User$HibernateProxy$SWmpqPqD
 Hibernate: 
     select

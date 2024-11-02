@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.ceos20.instagram.Domain.Comment;
-import com.ceos20.instagram.Domain.Post;
+import com.ceos20.instagram.post.domain.Post;
 import com.ceos20.instagram.Domain.User;
 import com.ceos20.instagram.Dto.CommentRequest;
 import com.ceos20.instagram.Repository.CommentRepository;
@@ -19,7 +19,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Optional;
 

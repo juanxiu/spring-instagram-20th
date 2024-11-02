@@ -21,6 +21,9 @@ public class ChatMessage {
 
     private String message;
 
+    /*
+    XXToOne은 default가 즉시로딩인데 혹시 지연로딩으로 설정하지 않은 이유가 있으신가요??
+     */
     @ManyToOne
     @JoinColumn(name = "sender_id") //
     private User sender;// 하나의 유저는 여러 개의 메시지를 보낼 수 있다.
