@@ -20,15 +20,6 @@ public class FollowService {
             throw new IllegalStateException("이미 팔로우 하고 있는 사용자입니다.");
         }
 
-
-        /*
-        여기도 dto toEntity 로 .
-        dto -> entity
-        entity -> dto 둘 다 하고 싶으면 ? mapper 어노테이션
-        근데 엔티티에서 dto 변환은 왜 하냐?
-         */
-
-
         Follow follow = Follow.builder()
                 .fromUser(fromUser)
                 .toUser(toUser)
@@ -37,9 +28,6 @@ public class FollowService {
         followRepository.save(follow);
     }
 
-    /*
-    예외 처리 - custom을 templete이 상속받도록? 그리고  exceptionhandler 에서 하나를 관리.
-     */
     public void unfollow(Long fromUserId, Long toUserId) {
         User fromUser = userRepository.findById(fromUserId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다: " + fromUserId));

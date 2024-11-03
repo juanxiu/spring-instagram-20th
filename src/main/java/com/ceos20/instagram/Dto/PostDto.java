@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 // 사용자에게 받는 정보와 실제 저장되어야 할 정보가 다르기 때문에 DTO가 필요
 
@@ -17,10 +16,8 @@ import java.util.List;
 public class PostDto {
 
     private String caption;
-    private List<String> imageUrl; // 리스트로 만들 것. imageUrls
+    private String imageUrl;
     private LocalDateTime createdAt;
-
-    // toEntity- 이미지 리스트 -> 컬렉션?
     
 
 }

@@ -1,6 +1,5 @@
 package com.ceos20.instagram.Domain;
 
-import com.ceos20.instagram.post.domain.Post;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;

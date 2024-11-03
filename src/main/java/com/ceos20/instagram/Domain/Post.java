@@ -3,27 +3,24 @@
 // (powered by FernFlower decompiler)
 //
 
-package com.ceos20.instagram.post.domain;
+package com.ceos20.instagram.Domain;
 
-import com.ceos20.instagram.Domain.Comment;
-import com.ceos20.instagram.Domain.User;
-import com.ceos20.instagram.exception.ExceptionCode;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import com.ceos20.instagram.exception.BadRequestException;
+import java.util.Objects;
 
-import org.hibernate.annotations.SQLDelete;
+import lombok.Builder;
+import lombok.Generated;
+import lombok.Getter;
+import org.apache.catalina.User;
+import org.hibernate.metamodel.mapping.MappingModelExpressible;
 
 @Entity
 @Table(name = "post")
 @Getter
-@NoArgsConstructor
-@SQLDelete(sql = "UPDATE Post SET deleted = true WHERE id = ?") //엔티티에 적용하는 soft delete.
 public class Post {
 
     @Id
@@ -32,7 +29,6 @@ public class Post {
     private Long postId;
 
     private String caption;
-    // imageUrl의 경우, 컬렉션을 리스트로?
     private String imageUrl;
     private LocalDateTime createdAt;
 
@@ -41,23 +37,22 @@ public class Post {
     @JoinColumn(name = "user_id") // DB 의 FK명
     private User user;
 
-    /*
-    @onetomany 는 default가 lazy기 떄문에 굳이 직접 설정해주지 않아도 돼요!
-     */
-    @Column(nullable = false)
-    private int likeNumber;
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
+    private List<Likes> likes = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
     @OrderBy("id asc") // 댓글 정렬
     private List<Comment> comments;
 
 
+    public Post(){
+
+    }
+
     //테스트를 위한 빌더.
-    //allargs - 모든 생성자
-    //noargs -기본 생성자
     @Builder
-    public Post(final Long postId, final String caption, final String imageUrl, final LocalDateTime createdAt, User user) {
-        this.postId=postId;
+    public Post(String caption, String imageUrl, LocalDateTime createdAt, User user) {
+
         this.caption = caption;
         this.imageUrl = imageUrl;
         this.createdAt = createdAt;
@@ -69,15 +64,8 @@ public class Post {
         this.imageUrl=imageUrl;
     }
 
-    public void increaseLikeNumber(){
-        likeNumber++;
-    }
-
-    public void decreaseLikeNumber() {
-        if (likeNumber<=0){
-            throw new BadRequestException(ExceptionCode.INVALID_LIKE_NUMBER);
-        }
-        likeNumber--;
+    public int getLikesCount() {
+        return likes.size();
     }
 
 }

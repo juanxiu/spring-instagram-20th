@@ -1,6 +1,5 @@
 package com.ceos20.instagram.Domain;
 
-import com.ceos20.instagram.post.domain.Post;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,10 +15,6 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentid;
 
-    /*
-    또한 엔티티 생성시 자동으로 생성되는 시간이 생성되게끔 하기 위해 @CreatedDate나 @CreationTimeStamp같은 어노테이션을
-    사용하는 게 더 편할 것 같아용
-     */
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
 

@@ -5,7 +5,6 @@
 
 package com.ceos20.instagram.Domain;
 
-import com.ceos20.instagram.post.domain.Post;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;

@@ -1,15 +1,16 @@
-package com.ceos20.instagram.post.service;
+package com.ceos20.instagram.Service;
 
+import com.ceos20.instagram.Domain.Post;
 import com.ceos20.instagram.Domain.User;
 import com.ceos20.instagram.Dto.PostDto;
 import com.ceos20.instagram.Repository.PostRepository;
-import com.ceos20.instagram.post.domain.Post;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 

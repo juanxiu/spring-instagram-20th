@@ -4,25 +4,27 @@ import com.ceos20.instagram.Domain.ChatMessage;
 import com.ceos20.instagram.Domain.Chatroom;
 import com.ceos20.instagram.Domain.User;
 import lombok.Builder;
-
+import lombok.Data;
+import lombok.Getter;
 import java.util.Date;
 
+@Data
 @Builder
-public record ChatDto() {
+@Getter
+public class ChatDto {
 
-    Long messageId;
-    User sender;
-    Date sentAt;
+    private String message;
+    private User sender;
+    private Date sentAt;
 
-    public static ChatMessage of(Chatroom chatroom) {
+    public ChatMessage toEntity(Chatroom chatroom) {
         return ChatMessage.builder()
-                .messageId(chatroom.getRoomId())
-                .sender(chatroom.getSender())
-                .sentAt(chatroom.getCreatedAt())
+                .sender(this.sender)
+                .message(this.message)
+                .sentAt(new Date()) // 메시지 전송 시간
+                .roomId(chatroom)
                 .build();
     }
 
 
-    public String getMessage() {
-    }
 }
