@@ -1,8 +1,8 @@
-package com.ceos20.instagram.Dto;
+package com.ceos20.instagram.chat.dto;
 
-import com.ceos20.instagram.Domain.ChatMessage;
-import com.ceos20.instagram.Domain.Chatroom;
-import com.ceos20.instagram.Domain.User;
+import com.ceos20.instagram.chat.domain.ChatMessage;
+import com.ceos20.instagram.chatRoom.domain.Chatroom;
+import com.ceos20.instagram.user.domain.User;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
@@ -22,7 +22,7 @@ public class ChatDto {
                 .sender(this.sender)
                 .message(this.message)
                 .sentAt(new Date()) // 메시지 전송 시간
-                .roomId(chatroom)
+                .room(chatroom)
                 .build();
     }
 
