@@ -3,20 +3,19 @@
 // (powered by FernFlower decompiler)
 //
 
-package com.ceos20.instagram.Domain;
+package com.ceos20.instagram.post.domain;
 
+import com.ceos20.instagram.comment.domain.Comment;
+import com.ceos20.instagram.exception.BadRequestException;
+import com.ceos20.instagram.exception.ExceptionCode;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import lombok.Builder;
-import lombok.Generated;
 import lombok.Getter;
-import org.apache.catalina.User;
-import org.hibernate.metamodel.mapping.MappingModelExpressible;
+import com.ceos20.instagram.user.domain.User;
 
 @Entity
 @Table(name = "post")
@@ -26,30 +25,26 @@ public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id")
-    private Long postId;
+    private Long id;
 
     private String caption;
     private String imageUrl;
     private LocalDateTime createdAt;
 
-    // XToOne 은 기본이 EAGER 이므로 LAZY 로 설정
-    @ManyToOne(fetch = FetchType.LAZY) // 연관관계 주인
-    @JoinColumn(name = "user_id") // DB 의 FK명
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
-    private List<Likes> likes = new ArrayList<>();
+    private int likeNum;
 
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY)
-    @OrderBy("id asc") // 댓글 정렬
+    @OrderBy("id asc")
     private List<Comment> comments;
 
 
-    public Post(){
+    public Post(){}
 
-    }
 
-    //테스트를 위한 빌더.
     @Builder
     public Post(String caption, String imageUrl, LocalDateTime createdAt, User user) {
 
@@ -64,8 +59,13 @@ public class Post {
         this.imageUrl=imageUrl;
     }
 
-    public int getLikesCount() {
-        return likes.size();
+    public void increaseLikeNumber(){
+        likeNum++;
     }
-
+    public void decreaseLikeNumber() {
+        if (likeNum <= 0) {
+            throw new BadRequestException(ExceptionCode.INVALID_LIKE_NUMBER);
+        }
+        likeNum--;
+    }
 }
