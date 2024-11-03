@@ -1,15 +1,15 @@
-package com.ceos20.instagram.Service;
+package com.ceos20.instagram.comment.service;
 
-import com.ceos20.instagram.Domain.Comment;
-import com.ceos20.instagram.Domain.Post;
-import com.ceos20.instagram.Domain.User;
-import com.ceos20.instagram.Dto.CommentRequest;
-import com.ceos20.instagram.Repository.CommentRepository;
-import com.ceos20.instagram.Repository.PostRepository;
-import com.ceos20.instagram.Repository.UserRepository;
+import com.ceos20.instagram.comment.domain.Comment;
+import com.ceos20.instagram.comment.repository.CommentRepository;
+import com.ceos20.instagram.post.domain.Post;
+import com.ceos20.instagram.user.domain.User;
+import com.ceos20.instagram.comment.dto.CommentRequest;
+import com.ceos20.instagram.post.repository.PostRepository;
+import com.ceos20.instagram.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import java.util.Date;
+
 import java.util.List;
 
 public class CommentService {
@@ -20,7 +20,7 @@ public class CommentService {
 
     // 댓글 추가.
     public Comment save(Long postId, CommentRequest request, String userName, Long commentid) {
-        User user = userRepository.findByuserName(userName)
+        User user = userRepository.findByUsername(userName)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 존재하지 않습니다. userName=" + userName));
 
         Post post = postRepository.findPostById(postId)
@@ -55,7 +55,7 @@ public class CommentService {
 
         comment.update(dto.getComment());
     }
-    //댓글 삭제
+
     @Transactional
     public void delete(Long postId, Long userId) {
         Comment comment = commentRepository.findByPostIdAndUserId(postId, userId).orElseThrow(() ->
@@ -63,6 +63,5 @@ public class CommentService {
 
         commentRepository.delete(comment);
     }
-    // 이후 게시글을 작성 유저인지 확인하는 메서드를 추가할 것.
 
 }

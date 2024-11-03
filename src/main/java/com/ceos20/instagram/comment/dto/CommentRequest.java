@@ -1,11 +1,10 @@
-package com.ceos20.instagram.Dto;
+package com.ceos20.instagram.comment.dto;
 
-import com.ceos20.instagram.Domain.Comment;
-import com.ceos20.instagram.Domain.Post;
-import com.ceos20.instagram.Domain.User;
+import com.ceos20.instagram.comment.domain.Comment;
+import com.ceos20.instagram.post.domain.Post;
+import com.ceos20.instagram.user.domain.User;
 import lombok.Builder;
 import lombok.Data;
-import java.util.Date;
 
 @Data
 public class CommentRequest {
