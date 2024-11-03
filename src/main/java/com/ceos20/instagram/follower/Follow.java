@@ -1,5 +1,6 @@
-package com.ceos20.instagram.Domain;
+package com.ceos20.instagram.follower;
 
+import com.ceos20.instagram.user.domain.User;
 import jakarta.persistence.*;
 import lombok.Builder;
 

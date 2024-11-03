@@ -1,9 +1,7 @@
-package com.ceos20.instagram.Service;
+package com.ceos20.instagram.follower;
 
-import com.ceos20.instagram.Domain.Follow;
-import com.ceos20.instagram.Domain.User;
-import com.ceos20.instagram.Repository.FollowRepository;
-import com.ceos20.instagram.Repository.UserRepository;
+import com.ceos20.instagram.user.domain.User;
+import com.ceos20.instagram.user.repository.UserRepository;
 
 public class FollowService {
 
