@@ -400,4 +400,105 @@ public Comment toEntity(User writer, Post post, Comment parentComment) {
 - 이를 해결하고자 등장한 `toList() 메서드`는 **불변 리스트를 반환**
 - 둘 다 NULL 허용. 
 
+## Controller 테스트 
+
+### @WebMvcTest
+- 웹 계층의 테스트에 사용
+- 웹 계층에 관련된 컴포넌트만을 로드하여 빠르게 테스트를 수행
+- `Repository` 나 `Service`  계층은 @MockBean 사용해서 리포지토리와 서비스를 Mock 객체에 빈으로 등록해주어야 한다. 
+```dockerfile
+@WebMvcTest(PostController.class)
+public class PostControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private PostService postService;
+
+    @MockBean
+    private PostLikeService postLikeService;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    @MockBean
+    private PostRepository postRepository; // 여기를 MockBean으로 등록해야 합니다.
+
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        // Mock User 객체 생성
+        User mockUser = new User();
+        mockUser.setId(1L); // 적절한 ID 값
+        mockUser.setUsername("testUser"); // 사용자의 username을 설정
+        mockUser.setEmail("test@example.com"); // 이메일도 설정 (필요시)
+
+        // userRepository의 findByUsername 메소드가 호출될 때 mockUser를 반환하도록 설정
+        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(mockUser));
+
+        // Save 메소드 Mock 설정
+        when(userRepository.save(any(User.class))).thenReturn(mockUser); // save 메소드가 호출될 때 mockUser 반환
+
+        // Post 객체 생성
+        Post newPost = new Post(); // 새로운 Post 객체 생성
+        newPost.setId(1L); // ID 설정 (적절한 값)
+        newPost.setCaption("Sample Caption");
+        newPost.setImageUrl("SampleImageUrl.jpg");
+        newPost.setCreatedAt(LocalDateTime.now());
+
+        // PostRepository의 save 메소드 mocking
+        when(postRepository.save(any(Post.class))).thenReturn(newPost); // save 메소드가 호출될 때 newPost 반환
+    }
+
+
+    @Test
+    public void testCreatePost() throws Exception {
+        // Given
+        PostCreateReqDto request = new PostCreateReqDto("Sample Caption", "SampleImageUrl.jpg");
+        String username = "testUser"; // 대소문자 일치
+
+        // When
+        doNothing().when(postService).createPost(any(PostCreateReqDto.class), eq(username)); // createPost 메서드가 호출될 때 아무것도 하지 않도록 설정
+
+        // Act and Assert
+        mockMvc.perform(post("/api/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"caption\": \"Sample Caption\", \"imageUrl\": \"SampleImageUrl.jpg\"}")
+                        .param("username", username)) // param에서 username을 지정
+                .andExpect(status().isCreated());
+    }
+
+
+}
+```
+
+### 게시물 생성 API 
+URI: `api/posts`
+```dockerfile
+{
+  "caption": "Sample Caption",
+  "imageUrl": "SampleImageUrl.jpg"
+}
+```
+
+404 NOT FOUND
+```dockerfile
+	
+Error: response status is 404
+
+Response body
+Download
+{
+  "status": "NOT_FOUND",
+  "message": "해당 회원은 존재하지 않습니다."
+}
+```
+에러 메시지 
+```dockerfile
+2024-11-04T17:54:09.190+09:00 ERROR 36161 --- [nio-8080-exec-5] c.c.i.exception.GlobalExceptionHandler   : 해당 회원은 존재하지 않습니다.
+
+```
+
 
