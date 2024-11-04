@@ -106,8 +106,8 @@ Hibernate:
         p1_0.user_id 
     from
         post p1_0
-post = com.ceos20.instagram.Domain.Post@6da53709
-->post.getUser().getClass() = class com.ceos20.instagram.Domain.User$HibernateProxy$SWmpqPqD
+post = com.ceos20.instagram.post.domain.Post@6da53709
+->post.getUser().getClass() = class com.ceos20.instagram.user.domain.User$HibernateProxy$SWmpqPqD
 Hibernate: 
     select
         u1_0.user_id,
@@ -125,9 +125,9 @@ Hibernate:
             on u1_0.user_id=p1_0.user_id 
     where
         u1_0.user_id=?
-->post.getUser() = com.ceos20.instagram.Domain.User@3f1eb1bc
-post = com.ceos20.instagram.Domain.Post@2b55ac77
-->post.getUser().getClass() = class com.ceos20.instagram.Domain.User$HibernateProxy$SWmpqPqD
+->post.getUser() = com.ceos20.instagram.user.domain.User@3f1eb1bc
+post = com.ceos20.instagram.post.domain.Post@2b55ac77
+->post.getUser().getClass() = class com.ceos20.instagram.user.domain.User$HibernateProxy$SWmpqPqD
 Hibernate: 
     select
         u1_0.user_id,
@@ -145,7 +145,7 @@ Hibernate:
             on u1_0.user_id=p1_0.user_id 
     where
         u1_0.user_id=?
-->post.getUser() = com.ceos20.instagram.Domain.User@4ff1b0d
+->post.getUser() = com.ceos20.instagram.user.domain.User@4ff1b0d
 
 ```
 ### join fetch 사용하여 지연로딩 문제 해결
@@ -328,5 +328,76 @@ public class CommentRequest {
 - 기대하는 값과 실제 값이 동일한 지 검사
 - 첫 번째 인수 :expected. 기대하는 값을 넣어준다.
 - 두 번째 인수 : actual. 실제 값을 넣어준다.
+
+
+# CRUD API 과제 
+
+## 1. 정적 팩토리 메서드 패턴 이용한 dto 
+## Record
+```dockerfile
+@Builder
+public record PostResDto(User user, String caption, List<Comment> comments) {
+}
+```
+- 생성자, accessors(getter), equals(), hashCode(), toString() 등 DTO 특성의 클래스를 개발할때 매번 개발자가 직접 구현해주어야 했던 반복적인 작업이 불필요
+- final 클래스이므로 다른 클래스를 상속하거나/상속시킬 수 없다. 
+### 정적팩토리 메서드 
+- 객체를 생성하는 정적 메서드를 제공하여, 생성자 대신 이를 통해 객체를 반환하는 패턴
+### of 메서드 
+```dockerfile
+public static PostResDto of(final Post post, List<Comment> comments) {
+        return new PostResDto(post.getUser(), post.getCaption(), comments);
+    }
+```
+-  entity에서 DTO로 변환하는 역할을 한다.
+- 주로 entity를 조회한 결과를 클라이언트로 전송할 때나, DTO로 변환하여 컨트롤러에서 전달할 때 사용한다.
+  (응답)
+- 이 메서드는 entity에서 필요한 필드 값을 DTO에 설정하여 반환한다.
+
+### toEntity 메서드 
+```dockerfile
+public Comment toEntity(User writer, Post post, Comment parentComment) {
+        return Comment.builder()
+                .comment(comment) 
+                .user(writer)
+                .parentComment(parentComment)
+                .post(post)
+                .build();
+    }
+```
+- DTO에서 Entity로 변환하는 역할을 한다.
+- 주로 데이터를 저장하거나 업데이트하는 작업에 사용된다.
+- 이 메서드는 entity를 생성하고, DTO에서 받아온 필드 값을 entity에 설정하여 반환한다.
+
+## 2.Stream.toList()
+### `Stream`
+- 람다를 활용해 배열과 컬렉션을 함수형으로 간단하게 처리할 수 있는 기술
+- 기존의 for문과 Iterator 대신 사용한다.
+- 데이터 소스를 추상화하고, 데이터를 다루는데 자주 사용되는 메소드를 정의해놓음.
+
+### 중간연산 
+`mapping`
+- 스트림 내 요소들을 하나씩 특정 값으로 변환하는 작업, 값을 변환하기 위한 람다를 인자로 받는다.
+- 스트림을 원하는 모양의 새로운 스트림으로 변환하고싶을 때 사용
+
+```dockerfile
+@Transactional
+    public List<PostResDto> getPostByUser(final UserPostsReqDto request) {
+        final List<Post> posts = postRepository.findAllByUserId(request.userId());
+
+        return posts.stream()
+                .map(post -> PostResDto.of(post, post.getComments()))
+                .toList();
+    }
+```
+- 람다 표현식과 함수형 인터페이스를 사용
+  - `post -> PostResDto.of(post, post.getComments())`는 각 post 객체를 PostResDto로 변환하는 람다 표현식
+- map 연산을 통해 `PostResDto`로 변환된 요소들이 새로운 스트림에 담기고, 최종 연산인 `toList()`를 통해 이 스트림이 리스트로 반환
+
+### Collectors.toList() vs Steam.toList()
+- 둘 다 스트림을 리스트로 바꾸어 주는 기능
+- `collect(Collectors.toList()) ` 는 리턴되는 List가 수정이 가능하다는 문제 발생
+- 이를 해결하고자 등장한 `toList() 메서드`는 **불변 리스트를 반환**
+- 둘 다 NULL 허용. 
 
 
