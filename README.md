@@ -330,7 +330,8 @@ public class CommentRequest {
 - 두 번째 인수 : actual. 실제 값을 넣어준다.
 
 
-# CRUD API 과제 
+# WEEK 4
+CRUD API 과제 
 
 ## 1. 정적 팩토리 메서드 패턴 이용한 dto 
 ## Record
@@ -405,85 +406,9 @@ public Comment toEntity(User writer, Post post, Comment parentComment) {
 ### @WebMvcTest
 - 웹 계층의 테스트에 사용
 - 웹 계층에 관련된 컴포넌트만을 로드하여 빠르게 테스트를 수행
-- `Repository` 나 `Service`  계층은 @MockBean 사용해서 리포지토리와 서비스를 Mock 객체에 빈으로 등록해주어야 한다. 
-```dockerfile
-@WebMvcTest(PostController.class)
-public class PostControllerTest {
+- `Repository` 나 `Service`  계층은 @MockBean 사용해서 리포지토리와 서비스를 Mock 객체에 빈으로 등록해주어야 한다.
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
-    private PostService postService;
-
-    @MockBean
-    private PostLikeService postLikeService;
-
-    @MockBean
-    private UserRepository userRepository;
-
-    @MockBean
-    private PostRepository postRepository; // 여기를 MockBean으로 등록해야 합니다.
-
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        // Mock User 객체 생성
-        User mockUser = new User();
-        mockUser.setId(1L); // 적절한 ID 값
-        mockUser.setUsername("testUser"); // 사용자의 username을 설정
-        mockUser.setEmail("test@example.com"); // 이메일도 설정 (필요시)
-
-        // userRepository의 findByUsername 메소드가 호출될 때 mockUser를 반환하도록 설정
-        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(mockUser));
-
-        // Save 메소드 Mock 설정
-        when(userRepository.save(any(User.class))).thenReturn(mockUser); // save 메소드가 호출될 때 mockUser 반환
-
-        // Post 객체 생성
-        Post newPost = new Post(); // 새로운 Post 객체 생성
-        newPost.setId(1L); // ID 설정 (적절한 값)
-        newPost.setCaption("Sample Caption");
-        newPost.setImageUrl("SampleImageUrl.jpg");
-        newPost.setCreatedAt(LocalDateTime.now());
-
-        // PostRepository의 save 메소드 mocking
-        when(postRepository.save(any(Post.class))).thenReturn(newPost); // save 메소드가 호출될 때 newPost 반환
-    }
-
-
-    @Test
-    public void testCreatePost() throws Exception {
-        // Given
-        PostCreateReqDto request = new PostCreateReqDto("Sample Caption", "SampleImageUrl.jpg");
-        String username = "testUser"; // 대소문자 일치
-
-        // When
-        doNothing().when(postService).createPost(any(PostCreateReqDto.class), eq(username)); // createPost 메서드가 호출될 때 아무것도 하지 않도록 설정
-
-        // Act and Assert
-        mockMvc.perform(post("/api/posts")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"caption\": \"Sample Caption\", \"imageUrl\": \"SampleImageUrl.jpg\"}")
-                        .param("username", username)) // param에서 username을 지정
-                .andExpect(status().isCreated());
-    }
-
-
-}
-```
-
-### 게시물 생성 API 
-URI: `api/posts`
-```dockerfile
-{
-  "caption": "Sample Caption",
-  "imageUrl": "SampleImageUrl.jpg"
-}
-```
-
-404 NOT FOUND
+404 NOT FOUND 에러 
 ```dockerfile
 	
 Error: response status is 404
@@ -501,4 +426,160 @@ Download
 
 ```
 
+### 404 NotFound 해결 
+#### 원인
+- User 도메인이 양방향 매핑이었는데, 단방향 매핑으로 바꿈. `OneToMany`를 삭제하고 `Many` 에 해당하는 도메인에서만 `ManyToOne` 붙임. 
+- 그리고  Mock 객체를 만들 때 `User` 도메인에서 필요한 필드만 가짜 객체로 만들었음. 
+- `username` 이 응답 바디로 설정 안되어 있어서 서비스의 Creatpost에 전달 안되었음. 
+- 컨트롤러에서 `@RequestBody ` 를 `PostCreateReqDto`만 받도록 수정하고, 그에 따라 `creatPost` 서비스의 메서드 파라미터도 수정함. 기존에는 `username` 파라미터가 있었는데, 이건 사용자 인증 단계에서 구현하기로 하고, 지금은 `PostCreateReqDto` 에 `username` 필드를 넣음. 
 
+### Request Body
+URI: `api/posts` 게시물 생성 API 
+```dockerfile
+{
+  "username": "username",
+  "caption": "caption",
+  "imageUrl": "imageUrl"
+}
+```
+### swagger 응답 성공 
+<img width="1383" alt="스크린샷 2024-11-05 오후 4 11 30" src="https://github.com/user-attachments/assets/457c5fd2-a794-4604-bbd1-5c4af7a5e42e">
+
+## WEEK 5 
+### 지난 주 리팩토링 
+### ResponseEntity
+- Spring Framework에서 제공하는 클래스 중 HttpEntity라는 클래스가 존재한다. 이것은 HTTP 요청(Request) 또는 응답(Response)에 해당하는 HttpHeader와 HttpBody를 포함하는 클래스
+- HttpEntity 클래스를 상속받아 구현한 클래스가 RequestEntity, ResponseEntity 클래스이다. ResponseEntity는 사용자의 HttpRequest에 대한 응답 데이터를 포함하는 클래스이다. 따라서 HttpStatus, HttpHeaders, HttpBody를 포함
+
+성공 응답을 나눌 필요는? 200과 201
+
+### @Transactional(readOnly = true)
+- 트랜잭션 전역처리
+- Service 단에서 @Transactional(readOnly=True)를 클래스 레벨에 선언하면 자동으로 모든 서비스 내 메소드에 읽기전용 트랜잭션이 적용되기에, 삭제와 추가같이 디비를 조작할 일이 있는 메소드에만 @Transactional을 쓰는 방식으로 구현
+
+
+## 1. JWT 인증(Authentication)
+### 액세스토큰
+#### payload 
+- Payload 부분에는 토큰에 담을 정보가 들어있습니다. 여기에 담는 정보의 한 ‘조각’ 을 클레임(Claim) 이라고 부르고, 이는 Json(Key/Value) 형태의 한 쌍
+- 생성된 토큰은 HTTP 통신을 할 때 Authorization이라는 key의 value로 사용된다. 일반적으로 value에는 Bearer가 앞에 붙여진다. 
+### 리프레쉬 토큰 
+- 평소에 API 통신할 때는 Access Token을 사용하고, Refresh Token은 Access Token이 만료되어 갱신될 때만 사용
+1. 클라이언트에서 API를 호출하면 액세스 토큰이 유효한지 검사한다.
+2. 액세스 토큰이 만료되었다면 클라이언트에서는 리프레시 토큰을 추가로 요청 헤더에 담아서 다시 한번 API를 호출한다.
+3. 리프레시 토큰이 유효하면 새로운 액세스 토큰을 응답 헤더에 담아서 정상 응답을 반환한다.
+
+### 세션, 쿠키
+- 사용자가 로그인을 합니다.
+
+- 서버에서는 계정 정보를 읽어 사용자를 확인한 후, 사용자에게 고유한 ID값을 부여하여 세션 저장소에 저장한 후, 이와 연결되는 Session ID를 발급합니다.
+
+- 서버는 HTTP 응답 헤더에 발급된 Session ID를 실어 보냅니다. 이후 매 요청마다 HTTP 요청 헤더에 Session ID가 담킨 쿠키를 실어 보냅니다.
+
+- 서버에서는 쿠키를 받아 세션 저장소에서 대조를 한 후 대응되는 정보를 가져옵니다.
+
+- 인증이 완료되고 서버는 사용자에 맞는 데이터를 보내줍니다.
+### OAuth
+- Refresh Token이 탈취당하는 건 예방할 수 있을까? OAuth에서는 Refresh Token Rotation을 제시
+- Refresh Token Rotation은 클라이언트가 Access Token를 재요청할 때마다 Refresh Token도 새로 발급받는 것이다.
+- 이렇게 되면 탈취자가 가지고 있는 Refresh Token은 더이상 만료 기간이 긴 토큰이 아니게 된다.
+
+
+## 2. 액세스 토큰 발급 및 검증 로직 구현
+### TokenProvider
+#### `getAccessToken`
+- Authorization 헤더에 Bearer <토큰> 형식으로 전달되는지 확인.
+
+#### `createAccessToken`
+- GrantedAuthority 객체에서 권한 정보 추출 후 authorities 에 저장.
+
+
+### custom filter 
+- CustomUserDetails: Custom 로그인 객체로 사용 
+- UserDetailsService 구현체의 loadUserByUsername() method의 반환 타입이 UserDetails
+- UserDetailsService 구현 클래스에서는 loadUserByUsername() 메서드를 통해 로그인 객체에서 필요한 user 정보를 담은 CustomUserDetails 클래스를 반환
+
+
+## 3. 회원가입 및 로그인 API 구현하고 테스트
+### Spring Security 와 로그인 테스트 
+- Spring Security에서 인증된 사용자 정보는 UsernamePasswordAuthenticationToken 객체로 표현
+- Principal(주체), Credentials(자격증명), Granted Authorities(부여된 권한)
+- Principal은 인증된 사용자의 정보를 나타낸다. CustomUserDetails 객체를 Principal로 설정했는데, CustomUserDetails는 사용자의 세부 정보(예: 사용자명, 이메일, 비밀번호 등)를 담고 있는 사용자 정의 클래스이다. 
+- Credentials는 사용자의 인증 정보를 나타낸다. 비밀번호와 같은 민감한 정보가 "PROTECTED"로 표시
+- Granted Authorities=[ROLE_USER]: Granted Authorities는 사용자가 부여받은 권한 목록을 나타냅니다.
+
+
+
+<img width="816" alt="스크린샷 2024-11-08 오후 5 05 40" src="https://github.com/user-attachments/assets/21e98091-9704-4857-bd8d-dbcf3de972bd">
+
+<img width="816" alt="스크린샷 2024-11-08 오후 5 05 58" src="https://github.com/user-attachments/assets/8b9f3be3-11e3-4a75-88f2-56867cb0f497">
+
+
+## 4. 토큰이 필요한 API 1개 이상 구현하고 테스트
+### POST http://localhost:8080/api/posts 게시물 생성 API 성공
+요청 헤더
+```dockerfile
+
+POST /api/posts HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMTIzNCIsImF1dGgiOiJVU0VSIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3MzExNzk0NjcsImV4cCI6MTczMTE4MzA2N30.fPhXjtRlRqOWBqHHFpz7SYkpVNxTbTYda9fcwlkBkwj5dSe788FXASt_JBpJ507MLqLGW2y4o5AQJyz9U7Vdog
+User-Agent: PostmanRuntime/7.42.0
+Accept: */*
+Postman-Token: 8d9b4695-6009-40a2-be7d-a0e52acce2fb
+Host: localhost:8080
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Content-Length: 53
+ 
+{
+"caption": "caption",
+"imageUrl": "image"
+}
+```
+응답 헤더
+```
+HTTP/1.1 201 Created
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 0
+Date: Sat, 09 Nov 2024 19:13:50 GMT
+Keep-Alive: timeout=60
+Connection: keep-alive
+```
+
+- @RequestBody
+- @PathVariable
+### @AuthenticationPrincipal
+- SecurityContextHolder에 저장된 인증 객체의 principal을 가져와서 사용하는 것
+
+- 만약 요청에 토큰이 포함되지 않았다면? 
+- 401 Unauthorized: 인증이 필요하지만 제공된 인증 정보가 유효하지 않은 경우 (예: 토큰이 없거나 잘못된 경우)
+
+### 비밀번호 인코딩
+#### passwordEncoder
+- 클라이언트가 아이디 비밀번호를 입력한다면, 해싱 알고리즘을 통해 데이터베이스에서 비밀번호를 가져와 해시 값이 일치하는지 비교
+- 스프링 시큐리티에서는 PasswordEncoder의 구현을 위해 BCryptPasswordEncoder, ScryptPasswordEncoder, Argaon2PasswordEncoder 등을 제공하는데, BCryptPasswordEncoder 를 권장함. 
+- 기본 생성자일 경우 int인 strength는 -1로 선택되는데, -1일 시 보안의 강도는 10으로 자동으로 설정
+## 5. 트러블슈팅 
+1. 빈 이중 등록 
+- @Component 
+- @Bean 
+2. 403 Forbidden 에러: 클라이언트가 서버의 리소스에 대한 접근 권한이 없을 때 발생 
+- UserRole 생성
+
+
+### 다음 주에 추가할 것 
+#### @ModelAttribute
+- 클라이언트로부터 일반 HTTP 요청 파라미터나 multipart/form-data 형태의 파라미터를 받아 객체로 사용하고 싶을 때 이용
+- 객체 생성 및 초기화 > Data Binding > Validation 순서로 진행
+
+#### MultipartFile을 통한 파일 업로드
+#### BaseTimeEntity
+- createAt 필드 선언할 때 @CreateTimestamp와 같이 자동으로 객체 생성시간을 기록해주게끔 할 수 있어요! 그럼 객체 생성할 때 createAt필드를 우리가 직접 넣어주지 않아도 된다. 
