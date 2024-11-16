@@ -454,12 +454,13 @@ URI: `api/posts` 게시물 생성 API
 성공 응답을 나눌 필요는? 200과 201
 
 ### @Transactional(readOnly = true)
-- 트랜잭션 전역처리
-- Service 단에서 @Transactional(readOnly=True)를 클래스 레벨에 선언하면 자동으로 모든 서비스 내 메소드에 읽기전용 트랜잭션이 적용되기에, 삭제와 추가같이 디비를 조작할 일이 있는 메소드에만 @Transactional을 쓰는 방식으로 구현
+- 트랜잭션 전역처리 
+- Service 단에서 `@Transactional(readOnly=True)`를 클래스 레벨에 선언하면 자동으로 모든 서비스 내 메소드에 읽기전용 트랜잭션이 적용되기에, 삭제와 추가같이 디비를 조작할 일이 있는 메소드에만 @Transactional을 쓰는 방식으로 구현
 
 
 ## 1. JWT 인증(Authentication)
 ### 액세스토큰
+- stateless 
 #### payload 
 - Payload 부분에는 토큰에 담을 정보가 들어있습니다. 여기에 담는 정보의 한 ‘조각’ 을 클레임(Claim) 이라고 부르고, 이는 Json(Key/Value) 형태의 한 쌍
 - 생성된 토큰은 HTTP 통신을 할 때 Authorization이라는 key의 value로 사용된다. 일반적으로 value에는 Bearer가 앞에 붙여진다. 
@@ -484,23 +485,27 @@ URI: `api/posts` 게시물 생성 API
 - Refresh Token Rotation은 클라이언트가 Access Token를 재요청할 때마다 Refresh Token도 새로 발급받는 것이다.
 - 이렇게 되면 탈취자가 가지고 있는 Refresh Token은 더이상 만료 기간이 긴 토큰이 아니게 된다.
 
+### Redis를 통한 Access Token 재발급 ??
+- Refresh 토큰 서버측 주도권 필요. 
+- 쿠키 
 
-## 2. 액세스 토큰 발급 및 검증 로직 구현
-### TokenProvider
-#### `getAccessToken`
-- Authorization 헤더에 Bearer <토큰> 형식으로 전달되는지 확인.
+그 토큰 프로바이더에 getaccess 헤더에서 토큰만 추출? 이러면 
+문자열로 직접 bearer 로 떼줬잖아 그거 떼고 나머지는 구현해야 함. 
+substring ? 
+jwt가 왜 stateless? 디비에 접근 안함 . 매 순간마다 접근이 아니라서 stateless
+서버가 상태를 관리하는 가.. 에 따라 stateless/ ful 나뉜다. 
+세션은 매요청 접근이라 stateful . 
 
-#### `createAccessToken`
-- GrantedAuthority 객체에서 권한 정보 추출 후 authorities 에 저장.
 
-
-### custom filter 
+### SecurityConfig 설정 
 - CustomUserDetails: Custom 로그인 객체로 사용 
 - UserDetailsService 구현체의 loadUserByUsername() method의 반환 타입이 UserDetails
 - UserDetailsService 구현 클래스에서는 loadUserByUsername() 메서드를 통해 로그인 객체에서 필요한 user 정보를 담은 CustomUserDetails 클래스를 반환
+- csrf 비활성화 해도 되는 이유? 
+- CORS 
+- 프론트는 3000 포트 허용해야 함. 
 
-
-## 3. 회원가입 및 로그인 API 구현하고 테스트
+## 3. 회원가입 및 로그인 API 구현
 ### Spring Security 와 로그인 테스트 
 - Spring Security에서 인증된 사용자 정보는 UsernamePasswordAuthenticationToken 객체로 표현
 - Principal(주체), Credentials(자격증명), Granted Authorities(부여된 권한)
@@ -515,8 +520,8 @@ URI: `api/posts` 게시물 생성 API
 <img width="816" alt="스크린샷 2024-11-08 오후 5 05 58" src="https://github.com/user-attachments/assets/8b9f3be3-11e3-4a75-88f2-56867cb0f497">
 
 
-## 4. 토큰이 필요한 API 1개 이상 구현하고 테스트
-### POST http://localhost:8080/api/posts 게시물 생성 API 성공
+## 4. 게시물 생성 API 성공
+### POST /api/posts 
 요청 헤더
 ```dockerfile
 
@@ -557,10 +562,18 @@ Connection: keep-alive
 - @RequestBody
 - @PathVariable
 ### @AuthenticationPrincipal
-- SecurityContextHolder에 저장된 인증 객체의 principal을 가져와서 사용하는 것
+- `SecurityContextHolder`에 저장된 인증 객체의 principal을 가져와서 사용하는 것
+```dockerfile
+@Operation(summary = "게시글 작성", description = "게시글을 작성합니다")
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping
+    public ResponseEntity<Void> createPost(@RequestBody final PostCreateReqDto request, @AuthenticationPrincipal final CustomUserDetails customUserDetails) {
 
-- 만약 요청에 토큰이 포함되지 않았다면? 
-- 401 Unauthorized: 인증이 필요하지만 제공된 인증 정보가 유효하지 않은 경우 (예: 토큰이 없거나 잘못된 경우)
+        String username = customUserDetails.getUsername(); // 인증된 사용자 이름 가져오기
+        postService.createPost(request, username);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+```
 
 ### 비밀번호 인코딩
 #### passwordEncoder
@@ -571,15 +584,99 @@ Connection: keep-alive
 1. 빈 이중 등록 
 - @Component 
 - @Bean 
-2. 403 Forbidden 에러: 클라이언트가 서버의 리소스에 대한 접근 권한이 없을 때 발생 
-- UserRole 생성
+2. 403 Forbidden 에러
+- 에러 원인 
+#### `Authorization : Bearer <token>`
+- HTTP 표준과 Spring Security에서 토큰 기반 인증 정보를 전달하는 표준 방식
+- 대부분의 클라이언트 라이브러리 (예: Axios, Postman, Swagger 등) 와 브라우저의 인증 토큰 관리 방식이 Authorization 헤더에 의존한다고 함
 
+```dockerfile
+// doFilterInternal 코드 
+        String authorizationHeader = request.getHeader("Authorization");
+        log.info("Authorization Header: {}", authorizationHeader);
+        
+// successfulAuthentication 코드 ( Login Filter 의미) 
+         response.setHeader("Authorization", "Bearer " + accessToken);
+
+```
 
 ### 다음 주에 추가할 것 
 #### @ModelAttribute
 - 클라이언트로부터 일반 HTTP 요청 파라미터나 multipart/form-data 형태의 파라미터를 받아 객체로 사용하고 싶을 때 이용
 - 객체 생성 및 초기화 > Data Binding > Validation 순서로 진행
 
-#### MultipartFile을 통한 파일 업로드
+#### MultipartFile을 통한 파일 업로드 - S3 config 
 #### BaseTimeEntity
 - createAt 필드 선언할 때 @CreateTimestamp와 같이 자동으로 객체 생성시간을 기록해주게끔 할 수 있어요! 그럼 객체 생성할 때 createAt필드를 우리가 직접 넣어주지 않아도 된다. 
+
+## WEEK 6
+### 도커 
+### 1. Docker Hub에서 이미지 pull 받기
+`docker pull nginx`
+- 별도의 태그를 지정하지 않으면 nginx:latest 이미지를 가져온다.
+
+`docker images`
+- 로컬 이미지 목록 조회 명령어
+
+<img width="913" alt="스크린샷 2024-11-13 오후 7 16 23" src="https://github.com/user-attachments/assets/703ec846-1cc0-437e-8ad4-770a8e7a8e6c">
+
+### 2. 이미지 실행시키기 
+`dockerd run -p <포트포워딩> <image 이름>    // 이미지 실행 명령어`
+#### 포트 포워딩
+- Host OS(우리가 사용하는 컴퓨터 OS) 위에서 도커 engine 이 실행되면, 도커 container 를 실행시킬 수 있다. 이 때, Host 의 port 와 container 의 port 를 맵핑시켜줘야 외부에서 container 로 접근할 수 있는데, 이를 **포트 포워딩** 이라고 한다.
+- 8080:80의 경우, 호스트의 8080 포트와 도커 컨테이너의 80 포트를 연결한 컨테이너를 실행한다는 의미
+- `-p` 옵션 : container 의 port 를 host 에 publish 한다.
+(cf. -p 에서 p 는 port 가 아니라 publish 의 축약어이다)
+**- Host 의 8088번포트(외부포트) 와 Container 의 80번포트(내부포트) 를 포워딩 시켜준다.**
+도커는 호스트 컴퓨터의 8088포트로 들어오는 네트워크 트래픽을 주시하다가 필요한 트래픽을 컨테이너의 80 포트로 전달한다.
+
+`--publish`라는 플래그 덕분에 호스트 컴퓨터의 물리 네트워크 주소가 컨테이너의 가상 네트워크 주소에 접근할 수 있는 것이다. 왜냐하면 이 가상 주소는 도커 내부에만 존재하는 주소이기 때문이다. 하지만, `--publish`라는 플래그를 통해 컨테이너의 포트가 공개되었으므로 컨테이너로 트래픽을 전달할 수는 있는 것이다.
+<img width="913" alt="스크린샷 2024-11-13 오후 7 21 25" src="https://github.com/user-attachments/assets/9fba1be5-3b74-4a49-bf08-8baaefa9d161">
+
+### 3. 이미지 실행 결과 확인 
+`http://localhost:<호스트 포트 번호>`
+
+<img width="745" alt="스크린샷 2024-11-13 오후 7 24 35" src="https://github.com/user-attachments/assets/5d11d15b-ca76-477d-8322-a58a8d68bae2">
+
+### 4. 컨테이너 실행시키기 
+```
+docker run --name <container 이름> -p <포트포워딩> <image 이름>    // 이미지를 담은 컨테이너 실행 명령어
+```
+<img width="854" alt="스크린샷 2024-11-13 오후 7 31 15" src="https://github.com/user-attachments/assets/d107d619-84d9-4975-a3c6-6704aad8e2ba">
+
+### 5. 컨테이너 실행 결과 확인 
+```dockerfile
+docker ps       // 실행 중인 컨테이너 목록 확인 명령어
+docker ps -a    // 전체 컨테이너 목록 확인 명령어
+
+// 확인 후 CMD + C 로 실행 종료
+
+```
+<img width="935" alt="스크린샷 2024-11-13 오후 7 33 58" src="https://github.com/user-attachments/assets/217c8eab-9d69-494f-bf29-c5d84714b782">
+
+### 6. Docker Desktop 내역 확인
+<img width="949" alt="스크린샷 2024-11-13 오후 7 35 56" src="https://github.com/user-attachments/assets/2a107789-25bb-4f21-859b-6374bc2bb32b">
+
+## 도커 기반 스프링부트 빌드 
+```dockerfile
+FROM openjdk:17
+ARG JAR_FILE=/build/libs/*.jar
+COPY ${JAR_FILE} app.jar
+ENTRYPOINT ["java","-jar", "/app.jar"]
+```
+1. `FROM openjdk:17`: 도커 이미지를 생성할 때 사용할 베이스(OpenJDK 17) 이미지를 지정합니다.
+2. `ARG JAR_FILE=/build/libs/*.jar`: 도커 빌드 중에 사용되는 변수를 정의합니다. `JAR_FILE`은 나중에 `COPY` 명령에서 사용될 것입니다. 이 변수는 JAR 파일의  경로를 지정하는 역할을 합니다.
+3. `COPY ${JAR_FILE} app.jar`: 빌드된 JAR 파일을 도커 이미지 내부로 복사합니다. 이 명령은 빌드된 JAR 파일을 도커 이미지의 `/app.jar` 경로로 복사합니다.
+4. `ENTRYPOINT ["java","-jar","/app.jar"]`: 컨테이너가 실행될 때 실행되는 명령을 정의합니다. 여기서는 Java 실행 명령을 통해 `/app.jar` 경로에 있는 JAR 파일을 실행하도록 지정합니다.
+
+### 도커 이미지 생성 
+```dockerfile
+docker build -t {docker image 이름} {Dockerfile의 위치}
+```
+- -t 옵션를 통해 docker 이미지 이름 및 태그를 지정할 수 있습니다. (태그 생략시 default: latest)
+
+### 컨테이너 실행 
+```docker run -p 8080:8080 {docker image 이름}```
+## 도커 컴포즈 
+- 단일 서버에서 여러 개의 컨테이너를 하나의 서비스로 정의해 컨테이너의 묶음으로 관리할 수 있는 작업 환경을 제공하는 관리 도구 
+- 여러 개의 컨테이너가 하나의 애플리케이션으로 동작할 때, 도커 컴포즈를 사용하지 않으면 이를 테스트하기 위해 각 컨테이너를 하나씩 생성해야 한다. 
