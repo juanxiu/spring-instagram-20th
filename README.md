@@ -614,6 +614,8 @@ Connection: keep-alive
 ### 1. Docker Hub에서 이미지 pull 받기
 `docker pull nginx`
 - 별도의 태그를 지정하지 않으면 nginx:latest 이미지를 가져온다.
+- docker hub vs docker registry 
+- 
 
 `docker images`
 - 로컬 이미지 목록 조회 명령어
@@ -680,3 +682,160 @@ docker build -t {docker image 이름} {Dockerfile의 위치}
 ## 도커 컴포즈 
 - 단일 서버에서 여러 개의 컨테이너를 하나의 서비스로 정의해 컨테이너의 묶음으로 관리할 수 있는 작업 환경을 제공하는 관리 도구 
 - 여러 개의 컨테이너가 하나의 애플리케이션으로 동작할 때, 도커 컴포즈를 사용하지 않으면 이를 테스트하기 위해 각 컨테이너를 하나씩 생성해야 한다. 
+
+## WEEK 7
+### 리팩토링 
+- mysql 포트포워딩 에러 
+- `netstat -anv | grep 3306` 명령어로 3306 포트가 이미 사용 중인 것을 알게 됨. 
+```dockerfile
+yeonsookim@gim-yeonsuui-MacBookPro spring-instagram-20th % lsof -i :3306
+
+yeonsookim@gim-yeonsuui-MacBookPro spring-instagram-20th % netstat -anv | grep 3306
+
+tcp46      0      0  *.3306                 *.*                    LISTEN       131072  131072   8834      0 00100 00000006 0000000000035d81 00000000 00000800      1      0 000001
+tcp46      0      0  *.33060                *.*                    LISTEN       131072  131072   8834      0 00000 00000006 0000000000035d7e 00000000 00000800      1      0 000001
+
+```
+- `sudo` 명령어 사용해야 사용 중인 포트 PID 확인이 가능했음. 
+```dockerfile
+yeonsookim@gim-yeonsuui-MacBookPro spring-instagram-20th % sudo lsof -i :3306
+
+COMMAND  PID   USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+mysqld  8834 _mysql   22u  IPv6 0x8828d6f1ac7013bb      0t0  TCP *:mysql (LISTEN)
+yeonsookim@gim-yeonsuui-MacBookPro spring-instagram-20th % lsof -i :3306
+```
+- kill -9 명령어로 mysqld 프로세스를 종료했지만, 자동으로 재시작되는 문제 발생 
+- ` sudo pkill -f mysqld` mysql 프로세스 강제 종료 후, 시스템이 더 이상 mysqld 재시작하지 않도록 하는 명령어. 
+
+#### 스프링부트 빌드 시 sql 에러 
+- 호스트네임은 컨테이너명으로 할 것. (mysql:3306)
+```dockerfile
+DB_URL=jdbc:mysql://mysql:3306/INSTAGRAMdb 
+```
+- docker compose 파일
+```dockerfile
+      MYSQL_DATABASE: INSTAGRAMdb
+      MYSQL_ROOT_HOST: '%'
+```
+- 환경변수 의존성 추가
+- dockerfile `COPY .env ./ ` 추가 
+- docker compose 실행: `docker-compose -f docker-compose.yml up --build`
+- 상호작용하는 이미지들이 하나의 네트워크 상에 있어야함
+- MySQL 컨테이너 설정이 완료되고나서 Spring Boot 컨테이너가 실행되어야 DB 커넥션 에러가 발생하지 않는다. depends_on 명령어는 시작 순서만 db가 먼저 되도록 보장해주지, MySQL 설정이 끝나고나서 spring boot 컨테이너가 실행되는지는 보장해주진 않아서 DB 커넥션 에러가 발생할 수 있다.
+- `restart: always` : 항상 설정해둘 것. 서버 터졌을 때 다시 시작해주도록.
+- health check 를 통해 mysql 서버에 대한 상태 체크를 해야 함. (dockerfile, docker compose 둘 다 헬스체크 수정해야 함.)
+- 
+- 만약 빌드 이후 로컬에 변경사항이 발생했다면, `./gradlew build` 다시 할 필요 없이, `docker-compose up --build` 이미지만 재빌드해주면 된다. 
+
+- 실행 중인 컨테이너 확인 
+```dockerfile
+yeonsookim@gim-yeonsuui-MacBookPro spring-instagram-20th % docker ps
+
+CONTAINER ID   IMAGE                               COMMAND                  CREATED          STATUS                    PORTS                               NAMES
+85015ba05038   spring-instagram-20th-application   "java -jar /app.jar"     3 minutes ago    Up 3 minutes              0.0.0.0:8080->8080/tcp              instagram
+2eba64752c93   mysql:8.0                           "docker-entrypoint.s…"   19 minutes ago   Up 19 minutes (healthy)   0.0.0.0:3306->3306/tcp, 33060/tcp   mysql
+
+```
+
+#### image layer
+- image 구성하는 파일 전체를 수정하는 것이 아닌 마지막으로 수정된 layer만 변경
+- 캐시에 저장된다? 
+#### 트러블 슈팅 해결법 
+1. 디비 컨테이너 생성 
+- mysql 도커 이미지 생성 및 실행. 이미지 만들 필요 없이 docker hub에서 가져올 것. (승현언니 리드미 참고)
+- instagram 이미지, mysql 이미지 둘 다 생성 및 실행 해야 함. 
+- .yml 파일 수정: URL 호스트명을 컨테이너 이름으로 바꾸기. 
+- 두 컨테이너를 연결해주어야 함. 
+- .yml 못 읽는 것 같으면 .env 파일로 환경변수 넣어줄 것? 
+- 이미지 여러 개 하기 귀찮으면 docker compose
+
+
+## Amazon EC2 
+#### 보안그룹 
+- 보안그룹:가상방화벽 역할을 하여 인스턴스로의 트래픽을 제어. 
+- 인바운드와 아웃바운드 규칙을 정의하여 특정 트래픽만을 허용하도록 설정할 수 있다
+#### 키페어 
+- AWS에서는 공개 키 인프라(PKI)를 사용하여 인스턴스에 로그인함.
+- 키 페어는 사용자가 EC2 인스턴스의 암호화된 로그인 정보를 안전하게 전달할 수 있는 방법을 제공
+#### Elastic IP
+- 인스턴스 재시작 시 IP 주소가 바뀌는데, 이를 고정하기 위해 Elastic IP를 사용. 
+
+## ECR registry 
+- ecr 푸시 명령어 
+- docker-compose 경로 수정? ecr로? 
+- 빌드 시 플랫폼 변경하여 빌드 필요. 
+- `docker build --platform linux/amd64 -t [이미지 이름] .   `
+- ` docker tag [이미지 이름]  905418373142.dkr.ecr.ap-northeast-2.amazonaws.com/ceos-registry:latest`
+- `docker push 905418373142.dkr.ecr.ap-northeast-2.amazonaws.com/ceos-registry:latest`
+
+- 환경변수 포함해서 도커 이미지 빌드 
+```dockerfile
+docker build --platform linux/amd64 --build-arg DB_URL=jdbc:mysql://ceos-prac-database.cn8uymykiw76.ap-northeast-2.rds.amazonaws.com:3306/INSTAGRAMdb --build-arg DB_USERNAME=admin --build-arg DB_PASSWORD=rladustn0417! --build-arg DB_DRIVER_CLASS=com.mysql.cj.jdbc.Driver -t your-image-name .
+
+```
+
+## ECS 
+#### Task
+Task는 ECS에서 컨테이너를 실행하는 최소 단위라고 이해할 수 있습니다. 컨테이너를 ECS 상에서 실행시키기 위해서는 Task 안에서 정의되어야하며, 하나의 Task는 하나 이상의 컨테이너를 포함하고 있습니다.
+#### Task Definition
+위에서 설명한 Task를 만들어내기 위한 것으로 Task Definition은 설명서, Task는 Task Definition에 대한 인스턴스로 볼 수 있습니다. Task와 Task Definition의 관계를 Docker의 Docker container와 Docker image와 비슷한 개념으로 볼 수 있습니다. Task Definition을 통해, Task가 실행될 때의 CPU, Memory 성능, 실행할 컨테이너에 대한 image 정의 등을 설정할 수 있습니다.
+#### Service
+Service는 Task Defintion과 1:1 관계로 하나의 Service에는 하나의 Task Definition을 연결할 수 있습니다. 이때, 하나의 ECS cluster에 몇 개의 해당 Task Definition을 바탕으로 한 Task를 생성할 것인지를 설정할 수 있습니다. 예를 들어, Service를 생성하여 2개의 Task를 항상 띄워놓는 설정을 했을 때, ECS cluster 안에는 항상 2개의 Task가 띄워져 있도록 스케줄링 됩니다.
+#### Cluster
+Cluster는 내부에 여러 Cluster instance가 실행될 수 있는 가상의 공간이며, 같은 Cluster 내부의 태스크와 서비스는 같은 네트워킹 정보와 인프라 설정 (fargate or EC2)를 가지게 됩니다.
+
+#### 컨테이너 세부 정보
+ECR에 이미지를 열심히 올린 과정이 빛을 발할 순간입니다.
+이름을 적는 칸에 원하는 컨테이너의 이름을 적어주고 이미지 URL에 ECR에 아까 올린 이미지 repository의 URL과 태그를 복사해 붙여넣습니다. (ex. imageurl:{tag}) 이때 tag 자리에 latest를 적으면, 해당 url을 가진 repository에서 가장 최근에 올린 이미지를 자동으로 가져오게 됩니다.
+**포트 매핑에는 image에 올린 어플리케이션 서버의 포트 번호(8080)를 입력해 포트포워딩을 해줍니다**
+## RDS
+#### ECS 태스크(task) 인스턴스와 AWS RDS(Relational Database Service)의 데이터베이스를 연결
+- 데이터베이스 접속 정보는 AWS 시크릿 매니저(Secrets Manager)에서 관리
+- 서비스를 배포할 때 DB도 같이 배포해줘야한다. 이때 RDB를 자주 사용하는데, 자동 백업, 모니터링, 다중 AZ등 다양한 부가 기능을 제공하기 때문이다.
+  물론 EC2에 백엔드 서버와 MySQL을 같이 설치해서 사용하면, 비용 절감 등의 장점도 있다.
+- **하지만, 백엔드 서버의 장애로 서버가 다운되었을 때 DB도 같이 날아가는 불상사를 겪을 수 있다.**
+  현업에서도 EC2와 RDS를 분리해서 인프라를 구성하는 경우가 대부분이라 한다.
+
+
+## 트러블슈팅 
+### ECS Service 생성 에러 로그 
+
+```dockerfile
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'customUserDetailService' defined in URL [jar:nested:/app.jar/!BOOT-INF/classes/!/com/ceos20/instagram/auth/service/CustomUserDetailService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'userRepository' defined in com.ceos20.instagram.user.repository.UserRepository defined in @EnableJpaRepositories declared on JpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration: Cannot resolve reference to bean 'jpaSharedEM_entityManagerFactory' while setting bean property 'entityManager'
+```
+
+
+jar 파일 확인 
+```dockerfile
+ls build/libs/
+
+instagram-0.0.1-SNAPSHOT-plain.jar      instagram-0.0.1-SNAPSHOT.jar
+
+```
+jar 파일 안에 mysql 드라이버 설치 확인 
+```
+jar tf build/libs/instagram-0.0.1-SNAPSHOT.jar | grep mysql 
+
+BOOT-INF/lib/mysql-connector-j-8.3.0.jar
+```
+
+- mysql 드라이버 설치 잘 되어있음. 아 그러면 RDS 연결을 안해줘서 그런가? 
+### RDS 
+- 데이터베이스를 생성할 때 함께 만들어진 시큐리티 그룹의 인바운드 규칙(inbound rule)을 변경해야 한다. 데이터베이스로 접속하는 ECS 태스크들은 전부 VPC 네트워크 내부에 위치하기 때문에 VPC 네트워크에 속한 IP 주소에서 3306 포트로 접근하는 트래픽을 허용해야 한다.
+#### 현재 yml 파일 
+- url 연결이 도커 mysql 컨테이너명으로 되어있음. 
+```dockerfile
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/INSTAGRAMdb
+    username: root
+    password: juanxiu14!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+```
+- DATABASE_URL 을 `jdbc:mysql://<rds 엔드포인트>:3306/INSTAGRAMdb` 로 바꾸어야 할 것. 
+- 참고 :데이터베이스 테이블들을 초기화 하는 spring.jpa.hibernate.ddl-auto 속성이 create인 것에 주의하길 바란다. 필자는 AWS ECS, RDS 연결을 위한 예제를 작성하는 중이기 때문에 첫 배포시 에러가 발생하지 않도록 create 값을 사용했다.
+
+
+- RDS에 디비 생성 완료 
+- 도커 이미지에 환경변수, 플랫폼 변경해서 ecr 푸시 완료 
+- ecs 테스크 생성 시 환경변수 전달. 
