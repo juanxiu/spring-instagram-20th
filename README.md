@@ -742,13 +742,15 @@ CONTAINER ID   IMAGE                               COMMAND                  CREA
 - 캐시에 저장된다? 
 #### 트러블 슈팅 해결법 
 1. 디비 컨테이너 생성 
-- mysql 도커 이미지 생성 및 실행. 이미지 만들 필요 없이 docker hub에서 가져올 것. (승현언니 리드미 참고)
+- mysql 도커 이미지 생성 및 실행. 이미지 만들 필요 없이 docker hub에서 가져올 것.
 - instagram 이미지, mysql 이미지 둘 다 생성 및 실행 해야 함. 
 - .yml 파일 수정: URL 호스트명을 컨테이너 이름으로 바꾸기. 
 - 두 컨테이너를 연결해주어야 함. 
 - .yml 못 읽는 것 같으면 .env 파일로 환경변수 넣어줄 것? 
 - 이미지 여러 개 하기 귀찮으면 docker compose
 
+## 배포 
+![1*k1HJRbSK-r0hoXxuEjjVLw](https://github.com/user-attachments/assets/aeecca81-708b-472f-88e5-5c18ad811f39)
 
 ## Amazon EC2 
 #### 보안그룹 
@@ -760,21 +762,56 @@ CONTAINER ID   IMAGE                               COMMAND                  CREA
 #### Elastic IP
 - 인스턴스 재시작 시 IP 주소가 바뀌는데, 이를 고정하기 위해 Elastic IP를 사용. 
 
-## ECR registry 
-- ecr 푸시 명령어 
-- docker-compose 경로 수정? ecr로? 
-- 빌드 시 플랫폼 변경하여 빌드 필요. 
-- `docker build --platform linux/amd64 -t [이미지 이름] .   `
-- ` docker tag [이미지 이름]  905418373142.dkr.ecr.ap-northeast-2.amazonaws.com/ceos-registry:latest`
-- `docker push 905418373142.dkr.ecr.ap-northeast-2.amazonaws.com/ceos-registry:latest`
+## RDS
+### ECS 태스크 인스턴스와 AWS RDS의 데이터베이스를 연결
+- 데이터베이스 접속 정보는 AWS 시크릿 매니저(Secrets Manager)에서 관리
+- RDB는 자동 백업, 모니터링, 다중 AZ등 다양한 부가 기능을 제공하기 때문에 주로 사용한다. 
+  물론 EC2에 백엔드 서버와 MySQL을 같이 설치해서 사용하면, 비용 절감 등의 장점도 있다.
+- **하지만, 백엔드 서버의 장애로 서버가 다운되었을 때 DB도 같이 날아가는 불상사를 겪을 수 있다.**
+  현업에서도 EC2와 RDS를 분리해서 인프라를 구성하는 경우가 대부분이라 한다.
 
-- 환경변수 포함해서 도커 이미지 빌드 
+### 새로운 데이터베이스 환경변수로 변경
+- 데이터베이스를 생성할 때 함께 만들어진 시큐리티 그룹의 인바운드 규칙(inbound rule)을 변경해야 한다. 데이터베이스로 접속하는 ECS 태스크들은 전부 VPC 네트워크 내부에 위치하기 때문에 VPC 네트워크에 속한 IP 주소에서 3306 포트로 접근하는 트래픽을 허용해야 한다.
+- DATABASE_URL 을 `jdbc:mysql://<RDS 엔드포인트>:3306/INSTAGRAMdb` 로 바꾸어야 할 것.
+- 또한 username과 password도 rds의 것으로 바꾸어야 함.
+- 참고로, rds 생성 시 secret manager 를 사용하면 username과 password 자동 생성 가능하고 ecs 에서 가져오기도 편리하나, 과금 이슈로 사용하진 않았음.
+```dockerfile
+DB_PASSWORD=rladustn0417!
+DB_URL=jdbc:mysql://ceos-prac-database.cn8uymykiw76.ap-northeast-2.rds.amazonaws.com:3306/INSTAGRAMdb
+DB_USERNAME=admin
+DB_DRIVER_CLASS=com.mysql.cj.jdbc.Driver
+```
+### 데이터베이스 생성 
+- **RDS 에 접속하여 INSTAGRAMdb 데이터베이스를 미리 생성해두어야 한다.**
+- **로컬 mysql workbench 에서 새로운 connection 을 셋업하면 되는데, 이때 호스트네임은 RDS의 엔드포인트이다.**
+
+### 궁금한 점 
+- 데이터베이스를 로컬에서 생성해주는 방법밖에 없나? 
+- EC2 에 mysql 을 설치한 후에 RDS 에서 접근하는 게 더 나은 방법인가?
+
+## ECR registry 
+- 컨테이너 이미지를 손쉽게 저장, 공유 및 배포할 수 있는 완전관리형 Docker 컨테이너 레지스트리
+#### 환경변수 포함하고 플랫폼도 변경하여 도커 이미지 빌드
 ```dockerfile
 docker build --platform linux/amd64 --build-arg DB_URL=jdbc:mysql://ceos-prac-database.cn8uymykiw76.ap-northeast-2.rds.amazonaws.com:3306/INSTAGRAMdb --build-arg DB_USERNAME=admin --build-arg DB_PASSWORD=rladustn0417! --build-arg DB_DRIVER_CLASS=com.mysql.cj.jdbc.Driver -t your-image-name .
-
 ```
+#### 이미지 태그 추가 
+```dockerfile
+docker tag [이미지 이름]  905418373142.dkr.ecr.ap-northeast-2.amazonaws.com/ceos-registry:latest
+```
+#### 리포지토리에 푸시 
+```dockerfile
+docker push 905418373142.dkr.ecr.ap-northeast-2.amazonaws.com/ceos-registry:latest
+```
+#### 궁금한 점 
+- EC2 를 사용해서 ECR에 접근하는 게 맞는 건가? 
+- EC2 사용 안하면 환경변수 파일을 따로 못 만들고 도커 명령에서 -e 옵션을 주어야만 하는 것 같다. 
+
 
 ## ECS 
+### ECS Fargate 
+-  별도로 인스턴스를 생성 관리하지 않고, 완전한 매니지드 서비스의 형태로 도커 컨테이너를 실행시킬 수 있는 아마존의 서비리스 컨테이너 상품이다.
+- Docker 이미지가 리파지터리에 푸시되어 있다면, **클러스터 → 작업 정의 → 서비스**의 순서로 생성하여 완전히 24시간 서비스 가능한 애플리케이션을 기동할 수 있다.
 #### Task
 Task는 ECS에서 컨테이너를 실행하는 최소 단위라고 이해할 수 있습니다. 컨테이너를 ECS 상에서 실행시키기 위해서는 Task 안에서 정의되어야하며, 하나의 Task는 하나 이상의 컨테이너를 포함하고 있습니다.
 #### Task Definition
@@ -784,17 +821,24 @@ Service는 Task Defintion과 1:1 관계로 하나의 Service에는 하나의 Tas
 #### Cluster
 Cluster는 내부에 여러 Cluster instance가 실행될 수 있는 가상의 공간이며, 같은 Cluster 내부의 태스크와 서비스는 같은 네트워킹 정보와 인프라 설정 (fargate or EC2)를 가지게 됩니다.
 
-#### 컨테이너 세부 정보
-ECR에 이미지를 열심히 올린 과정이 빛을 발할 순간입니다.
-이름을 적는 칸에 원하는 컨테이너의 이름을 적어주고 이미지 URL에 ECR에 아까 올린 이미지 repository의 URL과 태그를 복사해 붙여넣습니다. (ex. imageurl:{tag}) 이때 tag 자리에 latest를 적으면, 해당 url을 가진 repository에서 가장 최근에 올린 이미지를 자동으로 가져오게 됩니다.
-**포트 매핑에는 image에 올린 어플리케이션 서버의 포트 번호(8080)를 입력해 포트포워딩을 해줍니다**
-## RDS
-#### ECS 태스크(task) 인스턴스와 AWS RDS(Relational Database Service)의 데이터베이스를 연결
-- 데이터베이스 접속 정보는 AWS 시크릿 매니저(Secrets Manager)에서 관리
-- 서비스를 배포할 때 DB도 같이 배포해줘야한다. 이때 RDB를 자주 사용하는데, 자동 백업, 모니터링, 다중 AZ등 다양한 부가 기능을 제공하기 때문이다.
-  물론 EC2에 백엔드 서버와 MySQL을 같이 설치해서 사용하면, 비용 절감 등의 장점도 있다.
-- **하지만, 백엔드 서버의 장애로 서버가 다운되었을 때 DB도 같이 날아가는 불상사를 겪을 수 있다.**
-  현업에서도 EC2와 RDS를 분리해서 인프라를 구성하는 경우가 대부분이라 한다.
+### 컨테이너 구성하기
+- 테스트 정의에서 컨테이너를 띄울 수 있는데, 컨테이너의 이미지 URL에 ECR에 아까 올린 이미지 repository의 URL과 태그를 복사해 붙여넣는다. (ex. imageurl:{tag}) 
+- 이때 tag 자리에 latest를 적으면, 해당 url을 가진 repository에서 가장 최근에 올린 이미지를 자동으로 가져오게 됩니다.
+- **포트 매핑에는 image에 올린 어플리케이션 서버의 포트 번호(8080)를 입력해 포트포워딩을 해준다.**
+- 환경변수의 키값을 추가한다. 
+
+### ECS Fargate vs ECS EC2
+#### Launch Type 중 Fargate 로 배포한 이유는? 
+- CloudWatch 이용이 편리해서
+<img width="836" alt="스크린샷 2024-11-25 오후 6 41 35" src="https://github.com/user-attachments/assets/87772034-3272-4a0c-bc75-899368ceb1b4">
+
+### API 테스트
+- 실행 성공한 테스크의 퍼블릭IP `43.203.222.239`
+- `http://<퍼블릭_IP>:<포트>/<엔드포인트> Postman 테스트`
+- 오잉 왜 connect ETIMEDOUT 43.203.222.239:8080 이런 에러가? 심지어 로컬에서도 접속이 안된다.
+- 테스크가 연결된 서브넷의 VPC의 보안그룹에서 외부 모든 트래픽의 8080 포트 허용해줌. 이전에는 VPC 내부 트래픽만 허용하고 있었음.
+- 회원가입 API 테스트 성공.
+  <img width="871" alt="스크린샷 2024-11-24 오전 1 07 12" src="https://github.com/user-attachments/assets/ce4522bf-5b1e-4f55-bbd8-7bb8e3345186">
 
 
 ## 트러블슈팅 
@@ -820,8 +864,35 @@ BOOT-INF/lib/mysql-connector-j-8.3.0.jar
 ```
 
 - mysql 드라이버 설치 잘 되어있음. 아 그러면 RDS 연결을 안해줘서 그런가? 
-### RDS 
-- 데이터베이스를 생성할 때 함께 만들어진 시큐리티 그룹의 인바운드 규칙(inbound rule)을 변경해야 한다. 데이터베이스로 접속하는 ECS 태스크들은 전부 VPC 네트워크 내부에 위치하기 때문에 VPC 네트워크에 속한 IP 주소에서 3306 포트로 접근하는 트래픽을 허용해야 한다.
+- env.properties 로 리팩터링. 
+- yml 파일에서 환경변수 잘 인식되도록 해줌. 
+```dockerfile
+@Configuration
+@PropertySources({
+        @PropertySource("classpath:properties/env.properties") // env.properties 파일 소스 등록
+})
+public class PropertyConfig {
+}
+```
+- 도커 파일 변경
+- ARG를 사용하여 빌드 시에 값을 전달하고, 이를 ENV로 설정하여 컨테이너 실행 시에도 환경 변수로 사용
+- 이렇게 설정하거나 빌드시 -e 옵션으로 환경변수 주입할 수도 있음. 
+```dockerfile
+# 환경 변수를 ARG로 정의하고, 이를 ENV로 전달
+ARG DB_URL
+ARG DB_USERNAME
+ARG DB_PASSWORD
+ARG DB_DRIVER_CLASS
+
+
+ENV DB_URL=$DB_URL
+ENV DB_USERNAME=$DB_USERNAME
+ENV DB_PASSWORD=$DB_PASSWORD
+ENV DB_DRIVER_CLASS=$DB_DRIVER_CLASS
+
+
+COPY src/main/resources/properties/env.properties ./
+```
 #### 현재 yml 파일 
 - url 연결이 도커 mysql 컨테이너명으로 되어있음. 
 ```dockerfile
@@ -832,19 +903,10 @@ spring:
     password: juanxiu14!
     driver-class-name: com.mysql.cj.jdbc.Driver
 ```
-- DATABASE_URL 을 `jdbc:mysql://<rds 엔드포인트>:3306/INSTAGRAMdb` 로 바꾸어야 할 것. 
-- 참고 :데이터베이스 테이블들을 초기화 하는 spring.jpa.hibernate.ddl-auto 속성이 create인 것에 주의하길 바란다. 필자는 AWS ECS, RDS 연결을 위한 예제를 작성하는 중이기 때문에 첫 배포시 에러가 발생하지 않도록 create 값을 사용했다.
 
-
+#### 과정 정리 
 - RDS에 디비 생성 완료 
 - 도커 이미지에 환경변수, 플랫폼 변경해서 ecr 푸시 완료 
 - ecs 테스크 생성 시 환경변수 전달.
-- 배포 성공 
+- ECS Service 배포 성공 
 
-### API 테스트 
-- 테스크의 퍼블릭IP `43.203.222.239`
-- `http://<퍼블릭_IP>:<포트>/<엔드포인트> Postman 테스트`
-- 오잉 왜 connect ETIMEDOUT 43.203.222.239:8080 이런 에러가? 심지어 로컬에서도 접속이 안된다. 
-- 테스크가 연결된 서브넷의 VPC의 보안그룹에서 외부 모든 트래픽의 8080 포트 허용해줌. 이전에는 VPC 내부 트래픽만 허용하고 있었음.
-- 회원가입 API 테스트 성공. 
-<img width="871" alt="스크린샷 2024-11-24 오전 1 07 12" src="https://github.com/user-attachments/assets/ce4522bf-5b1e-4f55-bbd8-7bb8e3345186">
